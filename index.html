@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Distance d'un point à une droite</title>
+</head>
+<body>
+  <h2>Calcul de la distance d'un point à une droite</h2>
+  
+  <p>Entrez les angles et distances en degrés et mètres :</p>
+  <label>Angle A: <input type="number" id="angleA"></label><br>
+  <label>Distance A: <input type="number" id="distA"></label><br><br>
+  
+  <label>Angle B: <input type="number" id="angleB"></label><br>
+  <label>Distance B: <input type="number" id="distB"></label><br><br>
+  
+  <label>Angle C: <input type="number" id="angleC"></label><br>
+  <label>Distance C: <input type="number" id="distC"></label><br><br>
+  
+  <button onclick="calculer()">Calculer la distance</button>
+  <p>Résultat : <span id="resultat"></span> mètres</p>
+
+  <script>
+    function degToRad(deg) {
+      return deg * Math.PI / 180;
+    }
+
+    function polarToCartesianX(angleDeg, distance) {
+      return distance * Math.sin(degToRad(angleDeg));
+    }
+
+    function polarToCartesianY(angleDeg, distance) {
+      return distance * Math.cos(degToRad(angleDeg));
+    }
+
+    function distancePointADroite(angleA, distA, angleB, distB, angleC, distC) {
+      const xA = polarToCartesianX(angleA, distA);
+      const yA = polarToCartesianY(angleA, distA);
+      const xB = polarToCartesianX(angleB, distB);
+      const yB = polarToCartesianY(angleB, distB);
+      const xC = polarToCartesianX(angleC, distC);
+      const yC = polarToCartesianY(angleC, distC);
+
+      const numerator = Math.abs((yB - yA) * xC - (xB - xA) * yC + xB * yA - yB * xA);
+      const denominator = Math.sqrt(Math.pow(yB - yA, 2) + Math.pow(xB - xA, 2));
+      return numerator / denominator;
+    }
+
+    function calculer() {
+      const angleA = parseFloat(document.getElementById("angleA").value);
+      const distA = parseFloat(document.getElementById("distA").value);
+      const angleB = parseFloat(document.getElementById("angleB").value);
+      const distB = parseFloat(document.getElementById("distB").value);
+      const angleC = parseFloat(document.getElementById("angleC").value);
+      const distC = parseFloat(document.getElementById("distC").value);
+
+      const resultat = distancePointADroite(angleA, distA, angleB, distB, angleC, distC);
+      document.getElementById("resultat").textContent = resultat.toFixed(2);
+    }
+  </script>
+</body>
+</html>
