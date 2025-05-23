@@ -2,18 +2,27 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Distance point-droite corrigée avec portée</title>
+  <title>Distance point-droite avec portée et export PNG</title>
   <style>
     body { font-family: Arial, sans-serif; max-width: 700px; margin: 30px auto; padding: 0 10px; }
     label { display: block; margin-top: 10px; }
     input, select { margin-left: 5px; }
     button { margin-top: 15px; padding: 7px 15px; font-size: 1em; }
-    #resultats { font-weight: bold; color: darkblue; margin-top: 15px; }
-    canvas { border: 1px solid #ccc; background: #f9f9f9; display: block; margin: 20px auto; }
+    #resultats {
+      font-weight: bold;
+      color: darkblue;
+      margin-top: 15px;
+    }
+    canvas {
+      border: 1px solid #ccc;
+      background: #f9f9f9;
+      display: block;
+      margin: 20px auto;
+    }
   </style>
 </head>
 <body>
-  <h2>Calcul de la distance d'un point à une droite avec portée</h2>
+  <h2>Calcul de la distance d'un point à une droite avec portée V0.2</h2>
 
   <p>Angles en degrés ou grades (gon), distances en mètres.</p>
 
@@ -54,11 +63,14 @@
 
   <canvas id="canvas" width="600" height="600"></canvas>
 
+  <button id="exportBtn" style="display:none;">Exporter en PNG</button>
+
 <script>
   const canvas = document.getElementById("canvas");
   const ctx = canvas.getContext("2d");
   const W = canvas.width;
   const H = canvas.height;
+  const exportBtn = document.getElementById("exportBtn");
 
   // Conversion angle gon vers radians corrigé
   function gonToRadAdjusted(gon) {
@@ -185,7 +197,7 @@
     const minY = Math.min(...ys);
     const maxY = Math.max(...ys);
 
-    const margin = 20; // marge canvas en px
+    const margin = 40; // marge canvas en px
     const scaleX = (W - 2*margin) / (maxX - minX || 1);
     const scaleY = (H - 2*margin) / (maxY - minY || 1);
     const scale = Math.min(scaleX, scaleY);
@@ -238,7 +250,16 @@
     ctx.stroke();
     ctx.setLineDash([]);
 
+    // Affiche bouton export
+    exportBtn.style.display = "inline-block";
   }
+
+  exportBtn.onclick = function() {
+    const link = document.createElement("a");
+    link.download = "distance_point_droite.png";
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  };
 </script>
 
 </body>
