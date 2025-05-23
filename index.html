@@ -1,64 +1,74 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Distance d'un point à une droite</title>
 </head>
 <body>
   <h2>Calcul de la distance d'un point à une droite</h2>
   
-  <p>Entrez les angles en deg et distances en degrés et mètres :</p>
-  <label>Angle accrochage gauche: <input type="number" id="angleA"></label><br>
-  <label>Distance Horizontale accrochage gauche: <input type="number" id="distA"></label><br><br>
+  <p>Entrez les angles en deg ou grad, distances en mètres :</p>
   
-  <label>Angle accrochage droite: <input type="number" id="angleB"></label><br>
-  <label>Distance Horizontale accrochage droite: <input type="number" id="distB"></label><br><br>
+  <label>Angle accrochage gauche: <input type="number" id="angleA" /></label><br />
+  <label>Distance Horizontale accrochage gauche: <input type="number" id="distA" /></label><br /><br />
   
-  <label>Angle point visé : <input type="number" id="angleC"></label><br>
-  <label>Distance point visé: <input type="number" id="distC"></label><br><br>
+  <label>Angle accrochage droite: <input type="number" id="angleB" /></label><br />
+  <label>Distance Horizontale accrochage droite: <input type="number" id="distB" /></label><br /><br />
+  
+  <label>Angle point visé: <input type="number" id="angleC" /></label><br />
+  <label>Distance point visé: <input type="number" id="distC" /></label><br /><br />
 
   <label>Unité des angles :
     <select id="angleUnite">
       <option value="deg">degrés (°)</option>
       <option value="grad">grades (gon)</option>
     </select>
-  </label><br><br>
+  </label><br /><br />
   
   <button onclick="calculer()">Calculer la distance</button>
   <p>Résultat : <span id="resultat"></span> mètres</p>
 
-  
   <script>
-  function degToRad(value, unit) {
+    // Conversion degrés ou grades en radians
+    function degToRad(value, unit) {
       if (unit === "deg") {
         return value * Math.PI / 180;
       } else if (unit === "grad") {
         return value * Math.PI / 200;
+      } else {
+        throw new Error("Unité inconnue pour l'angle");
       }
     }
 
-    function polarToCartesianX(angleDeg, distance) {
-      return distance * Math.sin(degToRad(angleDeg));
+    // Conversion polaire (angle + distance) vers coordonnées cartésiennes X
+    function polarToCartesianX(angle, distance, unit) {
+      return distance * Math.cos(degToRad(angle, unit)); // cos pour X
     }
 
-    function polarToCartesianY(angleDeg, distance) {
-      return distance * Math.cos(degToRad(angleDeg));
+    // Conversion polaire vers coordonnées cartésiennes Y
+    function polarToCartesianY(angle, distance, unit) {
+      return distance * Math.sin(degToRad(angle, unit)); // sin pour Y
     }
 
-    function distancePointADroite(angleA, distA, angleB, distB, angleC, distC) {
-      const xA = polarToCartesianX(angleA, distA);
-      const yA = polarToCartesianY(angleA, distA);
-      const xB = polarToCartesianX(angleB, distB);
-      const yB = polarToCartesianY(angleB, distB);
-      const xC = polarToCartesianX(angleC, distC);
-      const yC = polarToCartesianY(angleC, distC);
+    // Calcul de la distance entre point C et la droite AB
+    function distancePointADroite(angleA, distA, angleB, distB, angleC, distC, unit) {
+      const xA = polarToCartesianX(angleA, distA, unit);
+      const yA = polarToCartesianY(angleA, distA, unit);
+      const xB = polarToCartesianX(angleB, distB, unit);
+      const yB = polarToCartesianY(angleB, distB, unit);
+      const xC = polarToCartesianX(angleC, distC, unit);
+      const yC = polarToCartesianY(angleC, distC, unit);
 
+      // Formule distance point à droite
       const numerator = Math.abs((yB - yA) * xC - (xB - xA) * yC + xB * yA - yB * xA);
       const denominator = Math.sqrt(Math.pow(yB - yA, 2) + Math.pow(xB - xA, 2));
       return numerator / denominator;
     }
 
+    // Fonction appelée au clic
     function calculer() {
+      const angleUnite = document.getElementById("angleUnite").value;
+
       const angleA = parseFloat(document.getElementById("angleA").value);
       const distA = parseFloat(document.getElementById("distA").value);
       const angleB = parseFloat(document.getElementById("angleB").value);
@@ -66,8 +76,18 @@
       const angleC = parseFloat(document.getElementById("angleC").value);
       const distC = parseFloat(document.getElementById("distC").value);
 
-      const resultat = distancePointADroite(angleA, distA, angleB, distB, angleC, distC);
-      document.getElementById("resultat").textContent = resultat.toFixed(2);
+      // Validation basique des entrées
+      if ([angleA, distA, angleB, distB, angleC, distC].some(v => isNaN(v))) {
+        alert("Veuillez remplir tous les champs avec des nombres valides.");
+        return;
+      }
+
+      try {
+        const resultat = distancePointADroite(angleA, distA, angleB, distB, angleC, distC, angleUnite);
+        document.getElementById("resultat").textContent = resultat.toFixed(2);
+      } catch (e) {
+        alert("Erreur lors du calcul : " + e.message);
+      }
     }
   </script>
 </body>
