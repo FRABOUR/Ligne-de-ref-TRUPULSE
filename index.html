@@ -47,6 +47,7 @@
   <button onclick="calculer()">Calculer la distance</button>
   
   <p>Distance point C à la droite AB : <span id="resultat">-</span> mètres</p>
+  <p>Distance entre A et B : <span id="distanceAB">-</span> mètres</p>
 
   <script>
     function degToRad(value, unit) {
@@ -96,11 +97,19 @@
       }
 
       try {
-        const resultat = distancePointADroite(angleA, distA, angleB, distB, angleC, distC, angleUnite);
-        document.getElementById("resultat").textContent = resultat.toFixed(2);
-      } catch (e) {
-        alert("Erreur : " + e.message);
-      }
+  const xA = polarToCartesianX(angleA, distA, angleUnite);
+  const yA = polarToCartesianY(angleA, distA, angleUnite);
+  const xB = polarToCartesianX(angleB, distB, angleUnite);
+  const yB = polarToCartesianY(angleB, distB, angleUnite);
+
+  const resultat = distancePointADroite(angleA, distA, angleB, distB, angleC, distC, angleUnite);
+  document.getElementById("resultat").textContent = resultat.toFixed(2);
+
+  const distanceAB = Math.sqrt(Math.pow(xB - xA, 2) + Math.pow(yB - yA, 2));
+  document.getElementById("distanceAB").textContent = distanceAB.toFixed(2);
+} catch (e) {
+  alert("Erreur : " + e.message);
+}
     }
   </script>
 </body>
