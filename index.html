@@ -1,74 +1,74 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <title>Distance point-droite interactif</title>
+  <meta charset="UTF-8">
+  <title>Distance d'un point à une droite avec tracé</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 600px; margin: 30px auto; padding: 0 10px; }
-    label { display: block; margin-top: 10px; }
-    input, select { margin-left: 5px; }
-    button { margin-top: 15px; padding: 7px 15px; font-size: 1em; }
-    #resultat { font-weight: bold; color: darkblue; }
+    canvas { border: 1px solid black; margin-top: 15px; }
   </style>
 </head>
 <body>
-  <h2>Calcul interactif de la distance d'un point à une droite</h2>
-  
-  <p>Angles en degrés ou grades (gon), distances en mètres.</p>
-  
-  <label>Point A - Angle accrochage gauche :
-    <input type="number" id="angleA" step="0.01"  />
-  </label>
-  <label>Point A - Distance Horizontale accrochage gauche :
-    <input type="number" id="distA" step="0.01"  />
-  </label>
-  
-  <label>Point B - Angle accrochage droite :
-    <input type="number" id="angleB" step="0.01"  />
-  </label>
-  <label>Point B - Distance Horizontale droite :
-    <input type="number" id="distB" step="0.01"  />
-  </label>
-  
-  <label>Point C - Angle point visé :
-    <input type="number" id="angleC" step="0.01"  />
-  </label>
-  <label>Point C - Distance Horizontale point visé :
-    <input type="number" id="distC" step="0.01"  />
-  </label>
-  
+  <h2>Calcul de la distance d'un point à une droite</h2>
+
+  <p>Entrez les angles et distances :</p>
+  <label>Angle A (accrochage gauche) : <input type="number" id="angleA"></label><br>
+  <label>Distance A : <input type="number" id="distA"></label><br><br>
+
+  <label>Angle B (accrochage droite) : <input type="number" id="angleB"></label><br>
+  <label>Distance B : <input type="number" id="distB"></label><br><br>
+
+  <label>Angle C (point visé) : <input type="number" id="angleC"></label><br>
+  <label>Distance C : <input type="number" id="distC"></label><br><br>
+
   <label>Unité des angles :
     <select id="angleUnite">
       <option value="deg">degrés (°)</option>
-      <option value="grad" selected>grades (gon)</option>
+      <option value="grad">grades (gon)</option>
     </select>
-  </label>
-  
-  <button onclick="calculer()">Calculer la distance</button>
-  
-  <p>Distance point C à la droite AB : <span id="resultat">-</span> mètres</p>
-  <p>Distance entre A et B : <span id="distanceAB">-</span> mètres</p>
+  </label><br><br>
+
+  <button onclick="calculer()">Calculer</button>
+
+  <p><strong>Résultats :</strong></p>
+  <p>Coordonnées A : (<span id="xA">-</span>, <span id="yA">-</span>)</p>
+  <p>Coordonnées B : (<span id="xB">-</span>, <span id="yB">-</span>)</p>
+  <p>Coordonnées C : (<span id="xC">-</span>, <span id="yC">-</span>)</p>
+  <p>Distance AB : <span id="distAB">-</span> m</p>
+  <p>Distance de C à la droite AB : <span id="distCtoAB">-</span> m</p>
+
+  <canvas id="canvas" width="500" height="500"></canvas>
 
   <script>
     function degToRad(value, unit) {
-      if (unit === "deg") {
-        return value * Math.PI / 180;
-      } else if (unit === "grad") {
-        return value * Math.PI / 200;
-      } else {
-        throw new Error("Unité inconnue pour l'angle");
-      }
+      return unit === "deg" ? value * Math.PI / 180 : value * Math.PI / 200;
     }
 
     function polarToCartesianX(angle, distance, unit) {
-      return distance * Math.cos(degToRad(angle, unit));
-    }
-
-    function polarToCartesianY(angle, distance, unit) {
       return distance * Math.sin(degToRad(angle, unit));
     }
 
-    function distancePointADroite(angleA, distA, angleB, distB, angleC, distC, unit) {
+    function polarToCartesianY(angle, distance, unit) {
+      return distance * Math.cos(degToRad(angle, unit));
+    }
+
+    function projectionSurDroite(xA, yA, xB, yB, xC, yC) {
+      const ABx = xB - xA;
+      const ABy = yB - yA;
+      const ACx = xC - xA;
+      const ACy = yC - yA;
+      const t = (ABx * ACx + ABy * ACy) / (ABx * ABx + ABy * ABy);
+      return [xA + t * ABx, yA + t * ABy];
+    }
+
+    function calculer() {
+      const angleA = parseFloat(document.getElementById("angleA").value);
+      const distA = parseFloat(document.getElementById("distA").value);
+      const angleB = parseFloat(document.getElementById("angleB").value);
+      const distB = parseFloat(document.getElementById("distB").value);
+      const angleC = parseFloat(document.getElementById("angleC").value);
+      const distC = parseFloat(document.getElementById("distC").value);
+      const unit = document.getElementById("angleUnite").value;
+
       const xA = polarToCartesianX(angleA, distA, unit);
       const yA = polarToCartesianY(angleA, distA, unit);
       const xB = polarToCartesianX(angleB, distB, unit);
@@ -77,41 +77,61 @@
       const yC = polarToCartesianY(angleC, distC, unit);
 
       const numerator = Math.abs((yB - yA) * xC - (xB - xA) * yC + xB * yA - yB * xA);
-      const denominator = Math.sqrt(Math.pow(yB - yA, 2) + Math.pow(xB - xA, 2));
-      return numerator / denominator;
-    }
+      const denominator = Math.sqrt((yB - yA) ** 2 + (xB - xA) ** 2);
+      const distCtoAB = numerator / denominator;
 
-    function calculer() {
-      const angleUnite = document.getElementById("angleUnite").value;
+      const distAB = Math.sqrt((xB - xA) ** 2 + (yB - yA) ** 2);
 
-      const angleA = parseFloat(document.getElementById("angleA").value);
-      const distA = parseFloat(document.getElementById("distA").value);
-      const angleB = parseFloat(document.getElementById("angleB").value);
-      const distB = parseFloat(document.getElementById("distB").value);
-      const angleC = parseFloat(document.getElementById("angleC").value);
-      const distC = parseFloat(document.getElementById("distC").value);
+      const [xP, yP] = projectionSurDroite(xA, yA, xB, yB, xC, yC); // projection de C sur AB
 
-      if ([angleA, distA, angleB, distB, angleC, distC].some(v => isNaN(v))) {
-        alert("Veuillez entrer des nombres valides dans tous les champs.");
-        return;
+      document.getElementById("xA").textContent = xA.toFixed(2);
+      document.getElementById("yA").textContent = yA.toFixed(2);
+      document.getElementById("xB").textContent = xB.toFixed(2);
+      document.getElementById("yB").textContent = yB.toFixed(2);
+      document.getElementById("xC").textContent = xC.toFixed(2);
+      document.getElementById("yC").textContent = yC.toFixed(2);
+      document.getElementById("distAB").textContent = distAB.toFixed(2);
+      document.getElementById("distCtoAB").textContent = distCtoAB.toFixed(2);
+
+      // Tracé
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const offsetX = 250;
+      const offsetY = 250;
+      const scale = 2;
+
+      function drawPoint(x, y, color, label) {
+        ctx.beginPath();
+        ctx.arc(offsetX + x * scale, offsetY - y * scale, 4, 0, 2 * Math.PI);
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.fillText(label, offsetX + x * scale + 5, offsetY - y * scale - 5);
       }
 
-      try {
-  const xA = polarToCartesianX(angleA, distA, angleUnite);
-  const yA = polarToCartesianY(angleA, distA, angleUnite);
-  const xB = polarToCartesianX(angleB, distB, angleUnite);
-  const yB = polarToCartesianY(angleB, distB, angleUnite);
+      // Ligne AB
+      ctx.beginPath();
+      ctx.moveTo(offsetX + xA * scale, offsetY - yA * scale);
+      ctx.lineTo(offsetX + xB * scale, offsetY - yB * scale);
+      ctx.strokeStyle = "blue";
+      ctx.lineWidth = 2;
+      ctx.stroke();
 
-  const resultat = distancePointADroite(angleA, distA, angleB, distB, angleC, distC, angleUnite);
-  document.getElementById("resultat").textContent = resultat.toFixed(2);
+      // Hauteur de C vers AB
+      ctx.beginPath();
+      ctx.moveTo(offsetX + xC * scale, offsetY - yC * scale);
+      ctx.lineTo(offsetX + xP * scale, offsetY - yP * scale);
+      ctx.strokeStyle = "red";
+      ctx.setLineDash([5, 5]);
+      ctx.stroke();
+      ctx.setLineDash([]);
 
-  const distanceAB = Math.sqrt(Math.pow(xB - xA, 2) + Math.pow(yB - yA, 2));
-  document.getElementById("distanceAB").textContent = distanceAB.toFixed(2);
-} catch (e) {
-  alert("Erreur : " + e.message);
-}
+      drawPoint(xA, yA, "blue", "A");
+      drawPoint(xB, yB, "blue", "B");
+      drawPoint(xC, yC, "red", "C");
+      drawPoint(xP, yP, "black", "P");
     }
   </script>
 </body>
 </html>
-
