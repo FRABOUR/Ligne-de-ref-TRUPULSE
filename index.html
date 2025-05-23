@@ -27,24 +27,24 @@
   <p>Angles en degrés ou grades (gon), distances en mètres.</p>
 
   <label>Point A - Angle accrochage gauche :
-    <input type="number" id="angleA" step="0.01" />
+    <input type="number" id="angleA" step="0.01" value="327.12"/>
   </label>
   <label>Point A - Distance Horizontale accrochage gauche :
-    <input type="number" id="distA" step="0.01" />
+    <input type="number" id="distA" step="0.01" value="151.11"/>
   </label>
 
   <label>Point B - Angle accrochage droite :
-    <input type="number" id="angleB" step="0.01" />
+    <input type="number" id="angleB" step="0.01" value="39.03"/>
   </label>
   <label>Point B - Distance Horizontale accrochage droite :
-    <input type="number" id="distB" step="0.01" />
+    <input type="number" id="distB" step="0.01" value="24.36"/>
   </label>
 
   <label>Point C - Angle point visé :
-    <input type="number" id="angleC" step="0.01" />
+    <input type="number" id="angleC" step="0.01" value="7.15"/>
   </label>
   <label>Point C - Distance Horizontale point visé :
-    <input type="number" id="distC" step="0.01" />
+    <input type="number" id="distC" step="0.01" value="52.54"/>
   </label>
 
   <label>Unité des angles :
@@ -69,22 +69,19 @@
   const canvas = document.getElementById("canvas");
   const ctx = canvas.getContext("2d");
   const W = canvas.width;
-  const H = canvas.height;
+  const Hc = canvas.height; // renommé pour éviter collision avec point H
   const exportBtn = document.getElementById("exportBtn");
 
-  // Conversion angle gon vers radians corrigé
   function gonToRadAdjusted(gon) {
     const rad = gon * Math.PI / 200;
-    return Math.PI / 2 - rad; // 0 gon = Y positif
+    return Math.PI / 2 - rad;
   }
 
-  // Conversion angle degré vers radians corrigé
   function degToRadAdjusted(deg) {
     const rad = deg * Math.PI / 180;
     return Math.PI / 2 - rad;
   }
 
-  // Polar to Cartesian avec correction selon unité
   function polarToCartesian(angle, distance, unit) {
     let rad;
     if (unit === "grad") {
@@ -98,19 +95,16 @@
     };
   }
 
-  // Calcul distance point C à droite AB
   function distancePointADroite(A, B, C) {
     const numerator = Math.abs((B.y - A.y) * C.x - (B.x - A.x) * C.y + B.x * A.y - B.y * A.x);
     const denominator = Math.sqrt((B.y - A.y)**2 + (B.x - A.x)**2);
     return numerator / denominator;
   }
 
-  // Distance entre deux points
   function distancePoints(P1, P2) {
     return Math.sqrt((P2.x - P1.x)**2 + (P2.y - P1.y)**2);
   }
 
-  // Projection orthogonale du point C sur AB
   function projectionOrthogonale(A, B, C) {
     const ABx = B.x - A.x;
     const ABy = B.y - A.y;
@@ -127,7 +121,6 @@
     };
   }
 
-  // Dessine grille
   function drawGrid(ctx, width, height, step=20) {
     ctx.strokeStyle = "#ddd";
     ctx.lineWidth = 1;
@@ -145,7 +138,6 @@
     }
   }
 
-  // Transforme coordonnées pour centrer dans le canvas
   function toCanvasCoords(pt, centerX, centerY, scale) {
     return {
       x: centerX + pt.x * scale,
@@ -154,9 +146,7 @@
   }
 
   function calculer() {
-    // Lecture données
     const angleUnite = document.getElementById("angleUnite").value;
-
     const angleA = parseFloat(document.getElementById("angleA").value);
     const distA = parseFloat(document.getElementById("distA").value);
     const angleB = parseFloat(document.getElementById("angleB").value);
@@ -169,27 +159,20 @@
       return;
     }
 
-    // Conversion coordonnées polaires vers cartésiennes
     const A = polarToCartesian(angleA, distA, angleUnite);
     const B = polarToCartesian(angleB, distB, angleUnite);
     const C = polarToCartesian(angleC, distC, angleUnite);
+    const Hproj = projectionOrthogonale(A, B, C);
 
-    // Calculs distances
     const distCtoAB = distancePointADroite(A, B, C);
     const distAB = distancePoints(A, B);
 
-    // Projection de C sur AB
-    const H = projectionOrthogonale(A, B, C);
-
-    // Affichage résultats
     document.getElementById("distanceC").textContent = distCtoAB.toFixed(2);
     document.getElementById("distanceAB").textContent = distAB.toFixed(2);
 
-    // Nettoyage canvas
-    ctx.clearRect(0, 0, W, H);
+    ctx.clearRect(0, 0, W, Hc);
 
-    // Calcul du cadre à afficher (pour centrer)
-    const pts = [A, B, C, H, {x:0,y:0}];
+    const pts = [A, B, C, Hproj, {x:0,y:0}];
     const xs = pts.map(p => p.x);
     const ys = pts.map(p => p.y);
     const minX = Math.min(...xs);
@@ -197,19 +180,16 @@
     const minY = Math.min(...ys);
     const maxY = Math.max(...ys);
 
-    const margin = 40; // marge canvas en px
+    const margin = 40;
     const scaleX = (W - 2*margin) / (maxX - minX || 1);
-    const scaleY = (H - 2*margin) / (maxY - minY || 1);
+    const scaleY = (Hc - 2*margin) / (maxY - minY || 1);
     const scale = Math.min(scaleX, scaleY);
 
-    // Centre pour recentrer tout
     const centerX = margin + (W - 2*margin)/2 - ((minX + maxX)/2)*scale;
-    const centerY = margin + (H - 2*margin)/2 + ((minY + maxY)/2)*scale;
+    const centerY = margin + (Hc - 2*margin)/2 + ((minY + maxY)/2)*scale;
 
-    // Grille
-    drawGrid(ctx, W, H, 20);
+    drawGrid(ctx, W, Hc, 20);
 
-    // Fonction pour dessiner un point
     function drawPoint(p, label, color = "black") {
       const c = toCanvasCoords(p, centerX, centerY, scale);
       ctx.beginPath();
@@ -221,36 +201,32 @@
       ctx.fillText(label, c.x + 7, c.y - 7);
     }
 
-    // Dessiner points
     drawPoint(A, "A", "blue");
     drawPoint(B, "B", "blue");
     drawPoint(C, "C", "red");
-    drawPoint(H, "H", "green");
+    drawPoint(Hproj, "H", "green");
     drawPoint({x:0,y:0}, "Origine", "gray");
 
-    // Dessiner droite AB
     ctx.strokeStyle = "blue";
     ctx.lineWidth = 2;
     ctx.beginPath();
-    let cA = toCanvasCoords(A, centerX, centerY, scale);
-    let cB = toCanvasCoords(B, centerX, centerY, scale);
+    const cA = toCanvasCoords(A, centerX, centerY, scale);
+    const cB = toCanvasCoords(B, centerX, centerY, scale);
     ctx.moveTo(cA.x, cA.y);
     ctx.lineTo(cB.x, cB.y);
     ctx.stroke();
 
-    // Dessiner hauteur CH
     ctx.strokeStyle = "red";
     ctx.lineWidth = 2;
     ctx.setLineDash([6, 4]);
-    let cC = toCanvasCoords(C, centerX, centerY, scale);
-    let cH = toCanvasCoords(H, centerX, centerY, scale);
+    const cC = toCanvasCoords(C, centerX, centerY, scale);
+    const cH = toCanvasCoords(Hproj, centerX, centerY, scale);
     ctx.beginPath();
     ctx.moveTo(cC.x, cC.y);
     ctx.lineTo(cH.x, cH.y);
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Affiche bouton export
     exportBtn.style.display = "inline-block";
   }
 
