@@ -3,72 +3,60 @@
 <head>
   <meta charset="UTF-8">
   <title>Distance d'un point à une droite</title>
-  <style>
-    body { font-family: Arial; margin: 20px; max-width: 500px; }
-    label { display: block; margin: 8px 0; }
-    input, select { margin-left: 10px; }
-  </style>
 </head>
 <body>
   <h2>Calcul de la distance d'un point à une droite</h2>
-
-  <p>Entrez les angles (<strong>en degrés ou en grades</strong>) et les distances en <strong>mètres</strong> :</p>
-
-  <label>Angle accrochage Gauche :
-    <input type="number" id="angleA">
-  </label>
-  <label>Distance Horizontale accrochage Gauche (m) :
-    <input type="number" id="distA">
-  </label>
-
-  <label>Angle accrochage Droite :
-    <input type="number" id="angleB">
-  </label>
-  <label>Distance Horizontale accrochage Droite (m) :
-    <input type="number" id="distB">
-  </label>
-
-  <label>Angle point visé :
-    <input type="number" id="angleC">
-  </label>
-  <label>Distance Horizontale point visé (m) :
-    <input type="number" id="distC">
-  </label>
-
-  <label>Unité des angles :
-    <select id="angleUnite">
-      <option value="deg">degrés (°)</option>
-      <option value="grad">grades (gon)</option>
-    </select>
-  </label><br><br>
-
+  
+  <p>Entrez les angles en deg et distances en degrés et mètres :</p>
+  <label>Angle accrochage gauche: <input type="number" id="angleA"></label><br>
+  <label>Distance Horizontale accrochage gauche: <input type="number" id="distA"></label><br><br>
+  
+  <label>Angle accrochage droite: <input type="number" id="angleB"></label><br>
+  <label>Distance Horizontale accrochage droite: <input type="number" id="distB"></label><br><br>
+  
+  <label>Angle point visé : <input type="number" id="angleC"></label><br>
+  <label>Distance point visé: <input type="number" id="distC"></label><br><br>
+  
   <button onclick="calculer()">Calculer la distance</button>
   <p>Résultat : <span id="resultat"></span> mètres</p>
 
   <script>
-    function toRadians(value, unit) {
-      if (unit === "deg") {
-        return value * Math.PI / 180;
-      } else if (unit === "grad") {
-        return value * Math.PI / 200;
-      }
+    function degToRad(deg) {
+      return deg * Math.PI / 180;
     }
 
-    function polarToCartesianX(angle, distance, unit) {
-      return distance * Math.sin(toRadians(angle, unit));
+    function polarToCartesianX(angleDeg, distance) {
+      return distance * Math.sin(degToRad(angleDeg));
     }
 
-    function polarToCartesianY(angle, distance, unit) {
-      return distance * Math.cos(toRadians(angle, unit));
+    function polarToCartesianY(angleDeg, distance) {
+      return distance * Math.cos(degToRad(angleDeg));
     }
 
-    function distancePointADroite(aA, dA, aB, dB, aC, dC, unit) {
-      const xA = polarToCartesianX(aA, dA, unit);
-      const yA = polarToCartesianY(aA, dA, unit);
-      const xB = polarToCartesianX(aB, dB, unit);
-      const yB = polarToCartesianY(aB, dB, unit);
-      const xC = polarToCartesianX(aC, dC, unit);
-      const yC = polarToCartesianY(aC, dC, unit);
+    function distancePointADroite(angleA, distA, angleB, distB, angleC, distC) {
+      const xA = polarToCartesianX(angleA, distA);
+      const yA = polarToCartesianY(angleA, distA);
+      const xB = polarToCartesianX(angleB, distB);
+      const yB = polarToCartesianY(angleB, distB);
+      const xC = polarToCartesianX(angleC, distC);
+      const yC = polarToCartesianY(angleC, distC);
 
-      const num = Math.abs((yB
+      const numerator = Math.abs((yB - yA) * xC - (xB - xA) * yC + xB * yA - yB * xA);
+      const denominator = Math.sqrt(Math.pow(yB - yA, 2) + Math.pow(xB - xA, 2));
+      return numerator / denominator;
+    }
 
+    function calculer() {
+      const angleA = parseFloat(document.getElementById("angleA").value);
+      const distA = parseFloat(document.getElementById("distA").value);
+      const angleB = parseFloat(document.getElementById("angleB").value);
+      const distB = parseFloat(document.getElementById("distB").value);
+      const angleC = parseFloat(document.getElementById("angleC").value);
+      const distC = parseFloat(document.getElementById("distC").value);
+
+      const resultat = distancePointADroite(angleA, distA, angleB, distB, angleC, distC);
+      document.getElementById("resultat").textContent = resultat.toFixed(2);
+    }
+  </script>
+</body>
+</html>
