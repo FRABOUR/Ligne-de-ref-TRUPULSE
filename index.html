@@ -16,13 +16,25 @@
   
   <label>Angle point visé : <input type="number" id="angleC"></label><br>
   <label>Distance point visé: <input type="number" id="distC"></label><br><br>
+
+  <label>Unité des angles :
+    <select id="angleUnite">
+      <option value="deg">degrés (°)</option>
+      <option value="grad">grades (gon)</option>
+    </select>
+  </label><br><br>
   
   <button onclick="calculer()">Calculer la distance</button>
   <p>Résultat : <span id="resultat"></span> mètres</p>
 
+  
   <script>
-    function degToRad(deg) {
-      return deg * Math.PI / 180;
+  function toRadians(value, unit) {
+      if (unit === "deg") {
+        return value * Math.PI / 180;
+      } else if (unit === "grad") {
+        return value * Math.PI / 200;
+      }
     }
 
     function polarToCartesianX(angleDeg, distance) {
