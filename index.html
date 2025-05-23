@@ -1,43 +1,74 @@
-function degToRad(value, unit) {
-  if (unit === "deg") {
-    return value * Math.PI / 180;
-  } else if (unit === "grad") {
-    return value * Math.PI / 200;
-  } else {
-    throw new Error("Unité inconnue");
-  }
-}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Test calcul distance point-droite</title>
+</head>
+<body>
 
-// Selon certains systèmes de coordonnées, l'angle 0 est en haut (axe Y positif),
-// donc x = distance * sin(angle) et y = distance * cos(angle).
-// Testons cette variante :
+  <h2>Test calcul distance point à une droite</h2>
+  <button onclick="testCalcul()">Lancer test automatique</button>
+  <p id="testResult"></p>
 
-function polarToCartesianX(angle, distance, unit) {
-  return distance * Math.sin(degToRad(angle, unit));
-}
+  <script>
+    // On réutilise les fonctions corrigées ici :
 
-function polarToCartesianY(angle, distance, unit) {
-  return distance * Math.cos(degToRad(angle, unit));
-}
+    function degToRad(value, unit) {
+      if (unit === "deg") {
+        return value * Math.PI / 180;
+      } else if (unit === "grad") {
+        return value * Math.PI / 200;
+      } else {
+        throw new Error("Unité inconnue pour l'angle");
+      }
+    }
 
-// Le reste reste identique
+    function polarToCartesianX(angle, distance, unit) {
+      return distance * Math.cos(degToRad(angle, unit));
+    }
 
-const unit = "grad";
+    function polarToCartesianY(angle, distance, unit) {
+      return distance * Math.sin(degToRad(angle, unit));
+    }
 
-const A = { angle: 327.12, dist: 151.11 };
-const B = { angle: 39.03, dist: 24.36 };
-const C = { angle: 7.15, dist: 52.54 };
+    function distancePointADroite(angleA, distA, angleB, distB, angleC, distC, unit) {
+      const xA = polarToCartesianX(angleA, distA, unit);
+      const yA = polarToCartesianY(angleA, distA, unit);
+      const xB = polarToCartesianX(angleB, distB, unit);
+      const yB = polarToCartesianY(angleB, distB, unit);
+      const xC = polarToCartesianX(angleC, distC, unit);
+      const yC = polarToCartesianY(angleC, distC, unit);
 
-const xA = polarToCartesianX(A.angle, A.dist, unit);
-const yA = polarToCartesianY(A.angle, A.dist, unit);
-const xB = polarToCartesianX(B.angle, B.dist, unit);
-const yB = polarToCartesianY(B.angle, B.dist, unit);
-const xC = polarToCartesianX(C.angle, C.dist, unit);
-const yC = polarToCartesianY(C.angle, C.dist, unit);
+      // Formule distance point à droite
+      const numerator = Math.abs((yB - yA) * xC - (xB - xA) * yC + xB * yA - yB * xA);
+      const denominator = Math.sqrt(Math.pow(yB - yA, 2) + Math.pow(xB - xA, 2));
+      return numerator / denominator;
+    }
 
-const numerator = Math.abs((yB - yA) * xC - (xB - xA) * yC + xB * yA - yB * xA);
-const denominator = Math.sqrt(Math.pow(yB - yA, 2) + Math.pow(xB - xA, 2));
-const distance = numerator / denominator;
+    // Fonction appelée au clic
+    function calculer() {
+      const angleUnite = document.getElementById("angleUnite").value;
 
-console.log("Distance =", distance.toFixed(2), "m");
+      const angleA = parseFloat(document.getElementById("angleA").value);
+      const distA = parseFloat(document.getElementById("distA").value);
+      const angleB = parseFloat(document.getElementById("angleB").value);
+      const distB = parseFloat(document.getElementById("distB").value);
+      const angleC = parseFloat(document.getElementById("angleC").value);
+      const distC = parseFloat(document.getElementById("distC").value);
 
+      // Validation basique des entrées
+      if ([angleA, distA, angleB, distB, angleC, distC].some(v => isNaN(v))) {
+        alert("Veuillez remplir tous les champs avec des nombres valides.");
+        return;
+      }
+
+      try {
+        const resultat = distancePointADroite(angleA, distA, angleB, distB, angleC, distC, angleUnite);
+        document.getElementById("resultat").textContent = resultat.toFixed(2);
+      } catch (e) {
+        alert("Erreur lors du calcul : " + e.message);
+      }
+    }
+  </script>
+</body>
+</html>
