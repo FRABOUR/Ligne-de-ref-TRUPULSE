@@ -26,6 +26,17 @@
 
   <p>Angles en degrés ou grades (gon), distances en mètres.</p>
 
+  <label>Titre du graphique :
+    <input type="text" id="graphTitle" value="Distance point-droite"/>
+  </label>
+
+  <label>Nom du point A :
+    <input type="text" id="nomA" value="A"/>
+  </label>
+  <label>Nom du point B :
+    <input type="text" id="nomB" value="B"/>
+  </label>
+
   <label>Point A - Angle accrochage gauche :
     <input type="number" id="angleA" step="0.01" value="327.12"/>
   </label>
@@ -69,7 +80,7 @@
   const canvas = document.getElementById("canvas");
   const ctx = canvas.getContext("2d");
   const W = canvas.width;
-  const Hc = canvas.height; // renommé pour éviter collision avec point H
+  const Hc = canvas.height;
   const exportBtn = document.getElementById("exportBtn");
 
   function gonToRadAdjusted(gon) {
@@ -145,6 +156,19 @@
     };
   }
 
+  function drawPoint(p, label, color = "black") {
+    const c = toCanvasCoords(p, centerX, centerY, scale);
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, 5, 0, 2 * Math.PI);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.fillStyle = "black";
+    ctx.font = "14px Arial";
+    ctx.fillText(label, c.x + 7, c.y - 7);
+  }
+
+  let centerX, centerY, scale;
+
   function calculer() {
     const angleUnite = document.getElementById("angleUnite").value;
     const angleA = parseFloat(document.getElementById("angleA").value);
@@ -153,6 +177,9 @@
     const distB = parseFloat(document.getElementById("distB").value);
     const angleC = parseFloat(document.getElementById("angleC").value);
     const distC = parseFloat(document.getElementById("distC").value);
+    const nomA = document.getElementById("nomA").value || "A";
+    const nomB = document.getElementById("nomB").value || "B";
+    const graphTitle = document.getElementById("graphTitle").value;
 
     if ([angleA, distA, angleB, distB, angleC, distC].some(v => isNaN(v))) {
       alert("Veuillez remplir tous les champs avec des nombres valides.");
@@ -166,6 +193,8 @@
 
     const distCtoAB = distancePointADroite(A, B, C);
     const distAB = distancePoints(A, B);
+    const distHA = distancePoints(Hproj, A);
+    const distHB = distancePoints(Hproj, B);
 
     document.getElementById("distanceC").textContent = distCtoAB.toFixed(2);
     document.getElementById("distanceAB").textContent = distAB.toFixed(2);
@@ -183,30 +212,20 @@
     const margin = 40;
     const scaleX = (W - 2*margin) / (maxX - minX || 1);
     const scaleY = (Hc - 2*margin) / (maxY - minY || 1);
-    const scale = Math.min(scaleX, scaleY);
+    scale = Math.min(scaleX, scaleY);
 
-    const centerX = margin + (W - 2*margin)/2 - ((minX + maxX)/2)*scale;
-    const centerY = margin + (Hc - 2*margin)/2 + ((minY + maxY)/2)*scale;
+    centerX = margin + (W - 2*margin)/2 - ((minX + maxX)/2)*scale;
+    centerY = margin + (Hc - 2*margin)/2 + ((minY + maxY)/2)*scale;
 
     drawGrid(ctx, W, Hc, 20);
 
-    function drawPoint(p, label, color = "black") {
-      const c = toCanvasCoords(p, centerX, centerY, scale);
-      ctx.beginPath();
-      ctx.arc(c.x, c.y, 5, 0, 2 * Math.PI);
-      ctx.fillStyle = color;
-      ctx.fill();
-      ctx.fillStyle = "black";
-      ctx.font = "14px Arial";
-      ctx.fillText(label, c.x + 7, c.y - 7);
-    }
-
-    drawPoint(A, "A", "blue");
-    drawPoint(B, "B", "blue");
+    drawPoint(A, nomA, "blue");
+    drawPoint(B, nomB, "blue");
     drawPoint(C, "C", "red");
     drawPoint(Hproj, "H", "green");
     drawPoint({x:0,y:0}, "Origine", "gray");
 
+    // Droite AB
     ctx.strokeStyle = "blue";
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -216,6 +235,7 @@
     ctx.lineTo(cB.x, cB.y);
     ctx.stroke();
 
+    // Hauteur CH
     ctx.strokeStyle = "red";
     ctx.lineWidth = 2;
     ctx.setLineDash([6, 4]);
@@ -226,6 +246,20 @@
     ctx.lineTo(cH.x, cH.y);
     ctx.stroke();
     ctx.setLineDash([]);
+
+    // Titre
+    ctx.font = "18px Arial";
+    ctx.fillStyle = "black";
+    ctx.textAlign = "center";
+    ctx.fillText(graphTitle, W / 2, 30);
+
+    // Distances en bas du canvas
+    ctx.font = "14px Arial";
+    ctx.fillStyle = "darkred";
+    ctx.textAlign = "left";
+    ctx.fillText(`Distance C à ${nomA}${nomB} : ${distCtoAB.toFixed(2)} m`, 20, Hc - 60);
+    ctx.fillText(`Distance H à ${nomA} : ${distHA.toFixed(2)} m`, 20, Hc - 40);
+    ctx.fillText(`Distance H à ${nomB} : ${distHB.toFixed(2)} m`, 20, Hc - 20);
 
     exportBtn.style.display = "inline-block";
   }
