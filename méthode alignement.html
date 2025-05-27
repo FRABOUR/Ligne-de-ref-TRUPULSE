@@ -45,7 +45,6 @@
 </head>
 <body>
 
-<!-- Logo visible à 100% en haut à droite -->
 <img id="logoPage" src="logo.png" alt="Logo" />
 
 <h2>Calcul de la distance d'un point à une droite avec portée V0.3</h2>
@@ -58,21 +57,15 @@
 <label>Nom du point A :
   <input type="text" id="labelA" value="A"/>
 </label>
-<label>Angle accrochage gauche :
+<label>Angle accrochage A :
   <input type="number" id="angleA" step="0.01" value="327.12"/>
 </label>
-<label>Distance Horizontale accrochage gauche :
+<label>Distance Horizontale A :
   <input type="number" id="distA" step="0.01" value="151.11"/>
 </label>
 
-<label>Nom du point B :
-  <input type="text" id="labelB" value="B"/>
-</label>
-<label>Angle accrochage droite :
-  <input type="number" id="angleB" step="0.01" value="39.03"/>
-</label>
-<label>Distance Horizontale accrochage droite :
-  <input type="number" id="distB" step="0.01" value="24.36"/>
+<label>Distance entre A et B :
+  <input type="number" id="distanceABInput" step="0.01" value="100.00"/>
 </label>
 
 <label>Angle point visé (C) :
@@ -157,29 +150,33 @@
   }
 
   function calculer() {
-    const angleUnite = document.getElementById("angleUnite").value;
+    const unit = document.getElementById("angleUnite").value;
     const angleA = parseFloat(document.getElementById("angleA").value);
     const distA = parseFloat(document.getElementById("distA").value);
-    const angleB = parseFloat(document.getElementById("angleB").value);
-    const distB = parseFloat(document.getElementById("distB").value);
+    const distAB = parseFloat(document.getElementById("distanceABInput").value);
     const angleC = parseFloat(document.getElementById("angleC").value);
     const distC = parseFloat(document.getElementById("distC").value);
     const labelA = document.getElementById("labelA").value || "A";
-    const labelB = document.getElementById("labelB").value || "B";
+    const labelB = "B";
     const title = document.getElementById("graphTitle").value;
 
-    if ([angleA, distA, angleB, distB, angleC, distC].some(isNaN)) {
+    if ([angleA, distA, distAB, angleC, distC].some(isNaN)) {
       alert("Veuillez remplir tous les champs avec des nombres valides.");
       return;
     }
 
-    const A = polarToCartesian(angleA, distA, angleUnite);
-    const B = polarToCartesian(angleB, distB, angleUnite);
-    const C = polarToCartesian(angleC, distC, angleUnite);
+    const A = polarToCartesian(angleA, distA, unit);
+
+    const angleARad = unit === "grad" ? gonToRadAdjusted(angleA) : degToRadAdjusted(angleA);
+    const B = {
+      x: A.x + distAB * Math.cos(angleARad),
+      y: A.y + distAB * Math.sin(angleARad)
+    };
+
+    const C = polarToCartesian(angleC, distC, unit);
     const H = projectionOrthogonale(A, B, C);
 
     const distCtoAB = distancePointADroite(A, B, C);
-    const distAB = distancePoints(A, B);
     const distHA = distancePoints(H, A);
     const distHB = distancePoints(H, B);
 
