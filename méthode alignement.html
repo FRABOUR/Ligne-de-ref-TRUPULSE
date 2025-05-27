@@ -57,10 +57,12 @@
 <label>Nom du point A :
   <input type="text" id="labelA" value="A"/>
 </label>
-<label>Angle accrochage A :
+
+<label>Azimut de A :
   <input type="number" id="angleA" step="0.01" value="327.12"/>
 </label>
-<label>Distance Horizontale A :
+
+<label>Distance au point A :
   <input type="number" id="distA" step="0.01" value="151.11"/>
 </label>
 
@@ -68,10 +70,11 @@
   <input type="number" id="distanceABInput" step="0.01" value="100.00"/>
 </label>
 
-<label>Angle point visé (C) :
+<label>Azimut de C :
   <input type="number" id="angleC" step="0.01" value="7.15"/>
 </label>
-<label>Distance Horizontale point visé (C) :
+
+<label>Distance au point C :
   <input type="number" id="distC" step="0.01" value="52.54"/>
 </label>
 
@@ -150,38 +153,34 @@
   }
 
   function calculer() {
-    const unit = document.getElementById("angleUnite").value;
+    const angleUnite = document.getElementById("angleUnite").value;
     const angleA = parseFloat(document.getElementById("angleA").value);
     const distA = parseFloat(document.getElementById("distA").value);
-    const distAB = parseFloat(document.getElementById("distanceABInput").value);
+    const distanceAB = parseFloat(document.getElementById("distanceABInput").value);
     const angleC = parseFloat(document.getElementById("angleC").value);
     const distC = parseFloat(document.getElementById("distC").value);
     const labelA = document.getElementById("labelA").value || "A";
     const labelB = "B";
     const title = document.getElementById("graphTitle").value;
 
-    if ([angleA, distA, distAB, angleC, distC].some(isNaN)) {
+    if ([angleA, distA, angleC, distC, distanceAB].some(isNaN)) {
       alert("Veuillez remplir tous les champs avec des nombres valides.");
       return;
     }
 
-    const A = polarToCartesian(angleA, distA, unit);
-
-    const angleARad = unit === "grad" ? gonToRadAdjusted(angleA) : degToRadAdjusted(angleA);
-    const B = {
-      x: A.x + distAB * Math.cos(angleARad),
-      y: A.y + distAB * Math.sin(angleARad)
-    };
-
-    const C = polarToCartesian(angleC, distC, unit);
+    const A = polarToCartesian(angleA, distA, angleUnite);
+    const dirAB = polarToCartesian(angleA, 1, angleUnite);
+    const B = { x: A.x + dirAB.x * distanceAB, y: A.y + dirAB.y * distanceAB };
+    const C = polarToCartesian(angleC, distC, angleUnite);
     const H = projectionOrthogonale(A, B, C);
 
     const distCtoAB = distancePointADroite(A, B, C);
+    const distABcalc = distancePoints(A, B);
     const distHA = distancePoints(H, A);
     const distHB = distancePoints(H, B);
 
     document.getElementById("distanceC").textContent = distCtoAB.toFixed(2);
-    document.getElementById("distanceAB").textContent = distAB.toFixed(2);
+    document.getElementById("distanceAB").textContent = distABcalc.toFixed(2);
     document.getElementById("distanceHA").textContent = distHA.toFixed(2);
     document.getElementById("distanceHB").textContent = distHB.toFixed(2);
 
