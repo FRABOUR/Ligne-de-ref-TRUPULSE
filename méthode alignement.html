@@ -66,9 +66,9 @@
   <input type="number" id="distA" step="0.01" value="151.11"/>
 </label>
 
-<label>Distance entre A et B :
-  <input type="number" id="distanceABInput" step="0.01" value="100.00"/>
-</label>
+//<label>Distance entre A et B :
+//  <input type="number" id="distanceABInput" step="0.01" value="100.00"/>
+//</label>
 
 <label>Azimut de C :
   <input type="number" id="angleC" step="0.01" value="7.15"/>
@@ -267,7 +267,7 @@
     const distHC = distancePoints(H, C);
 
     // Monte Carlo (N=10000 itérations)
-    const N = 1000;
+    const N = 10000;
     const mc = monteCarloSimulations(N, angleUnite, angleA, distA, distanceAB, angleC, distC, sigmaAngle, sigmaDist);
 
     // Mise à jour des résultats texte sous les champs
