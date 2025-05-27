@@ -8,25 +8,25 @@
     body {
       margin: 0;
       padding: 0;
-      background-image: url('main\logo.png');
-      background-size: contain;
-      background-repeat: no-repeat;
-      background-position: center;
-      background-color: #f0f0f0; /* Couleur de fond au cas où le logo ne couvre pas tout */
-      height: 100vh;
+      background-color: #f0f0f0;
+      font-family: Arial, sans-serif;
       display: flex;
-      flex-direction: column;
       justify-content: center;
       align-items: center;
-      font-family: Arial, sans-serif;
+      height: 100vh;
     }
 
-    .overlay {
-      background-color: rgba(255, 255, 255, 0.8);
-      padding: 30px;
-      border-radius: 20px;
+    .container {
       text-align: center;
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+      background-color: white;
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .logo {
+      max-width: 200px;
+      margin-bottom: 30px;
     }
 
     h1 {
@@ -51,7 +51,8 @@
   </style>
 </head>
 <body>
-  <div class="overlay">
+ <div class="container">
+    <img src="images/logo.png" alt="Logo" class="logo" />
     <h1>Choisissez une méthode de calcul</h1>
     <a href="méthode classique.html"><button class="button">Méthode Alignement</button></a>
     <a href="méthode alignement.html"><button class="button">Méthode Classique</button></a>
