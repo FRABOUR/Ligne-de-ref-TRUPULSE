@@ -178,7 +178,7 @@ function calculAvecIncertitudes(angleA, distA, angleB, distB, angleC, distC, ang
   const H0 = projectionOrthogonale(A0, B0, C0);
   const distExacte = distancePointADroite(A0, B0, C0);
 
-  const N = 1000;
+  const N = 10000;
   const distances = [];
   for (let i = 0; i < N; i++) {
     const aA = angleA + randn_bm() * incertAngle;
