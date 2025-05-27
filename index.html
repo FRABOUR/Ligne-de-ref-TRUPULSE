@@ -2,255 +2,59 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Distance point-droite avec titre et logo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Choix de Méthode</title>
   <style>
     body {
+      margin: 0;
+      padding: 0;
+      background-image: url('images/logo.png'); /* Remplace par le vrai chemin */
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-color: #f0f0f0; /* Couleur de fond au cas où le logo ne couvre pas tout */
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
       font-family: Arial, sans-serif;
-      max-width: 750px;
-      margin: 30px auto;
-      padding: 0 10px;
-      position: relative;
     }
-    label {
-      display: block;
-      margin-top: 10px;
+
+    .overlay {
+      background-color: rgba(255, 255, 255, 0.8);
+      padding: 30px;
+      border-radius: 20px;
+      text-align: center;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
     }
-    input, select {
-      margin-left: 5px;
+
+    h1 {
+      margin-bottom: 30px;
     }
-    button {
-      margin-top: 15px;
-      padding: 7px 15px;
-      font-size: 1em;
+
+    .button {
+      margin: 10px;
+      padding: 15px 30px;
+      font-size: 16px;
+      border: none;
+      border-radius: 10px;
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
     }
-    canvas {
-      border: 1px solid #ccc;
-      background: #f9f9f9;
-      display: block;
-      margin: 20px auto;
-    }
-    #resultats {
-      font-weight: bold;
-      color: darkblue;
-      margin-top: 15px;
-    }
-    #logoPage {
-      position: absolute;
-      top: 80px;
-      right: 10px;
-      width: 200px;
-      opacity: 1;
+
+    .button:hover {
+      background-color: #0056b3;
     }
   </style>
 </head>
 <body>
-
-<!-- Logo visible à 100% en haut à droite -->
-<img id="logoPage" src="logo.png" alt="Logo" />
-
-<h2>Calcul de la distance d'un point à une droite avec portée V0.3</h2>
-<p>Angles en degrés ou grades (gon), distances en mètres.</p>
-
-<label>Titre du graphique :
-  <input type="text" id="graphTitle" value="Liaison A-B"/>
-</label>
-
-<label>Nom du point A :
-  <input type="text" id="labelA" value="A"/>
-</label>
-<label>Angle accrochage gauche :
-  <input type="number" id="angleA" step="0.01" value="327.12"/>
-</label>
-<label>Distance Horizontale accrochage gauche :
-  <input type="number" id="distA" step="0.01" value="151.11"/>
-</label>
-
-<label>Nom du point B :
-  <input type="text" id="labelB" value="B"/>
-</label>
-<label>Angle accrochage droite :
-  <input type="number" id="angleB" step="0.01" value="39.03"/>
-</label>
-<label>Distance Horizontale accrochage droite :
-  <input type="number" id="distB" step="0.01" value="24.36"/>
-</label>
-
-<label>Angle point visé (C) :
-  <input type="number" id="angleC" step="0.01" value="7.15"/>
-</label>
-<label>Distance Horizontale point visé (C) :
-  <input type="number" id="distC" step="0.01" value="52.54"/>
-</label>
-
-<label>Unité des angles :
-  <select id="angleUnite">
-    <option value="deg">degrés (°)</option>
-    <option value="grad" selected>grades (gon)</option>
-  </select>
-</label>
-
-<button onclick="calculer()">Calculer</button>
-
-<div id="resultats">
-  <p>Distance point C à la droite AB : <span id="distanceC"></span> m</p>
-  <p>Portée (AB) : <span id="distanceAB"></span> m</p>
-  <p>Distance H–A : <span id="distanceHA"></span> m</p>
-  <p>Distance H–B : <span id="distanceHB"></span> m</p>
-</div>
-
-<canvas id="canvas" width="700" height="600"></canvas>
-<button id="exportBtn" style="display:none;">Exporter en PNG</button>
-
-<script>
-  const canvas = document.getElementById("canvas");
-  const ctx = canvas.getContext("2d");
-  const W = canvas.width;
-  const Hc = canvas.height;
-  const exportBtn = document.getElementById("exportBtn");
-
-  function gonToRadAdjusted(gon) {
-    return Math.PI / 2 - (gon * Math.PI / 200);
-  }
-
-  function degToRadAdjusted(deg) {
-    return Math.PI / 2 - (deg * Math.PI / 180);
-  }
-
-  function polarToCartesian(angle, distance, unit) {
-    const rad = unit === "grad" ? gonToRadAdjusted(angle) : degToRadAdjusted(angle);
-    return { x: distance * Math.cos(rad), y: distance * Math.sin(rad) };
-  }
-
-  function distancePointADroite(A, B, C) {
-    const num = Math.abs((B.y - A.y) * C.x - (B.x - A.x) * C.y + B.x * A.y - B.y * A.x);
-    const den = Math.sqrt((B.y - A.y)**2 + (B.x - A.x)**2);
-    return den !== 0 ? num / den : 0;
-  }
-
-  function distancePoints(P1, P2) {
-    return Math.sqrt((P2.x - P1.x)**2 + (P2.y - P1.y)**2);
-  }
-
-  function projectionOrthogonale(A, B, C) {
-    const ABx = B.x - A.x, ABy = B.y - A.y;
-    const ACx = C.x - A.x, ACy = C.y - A.y;
-    const t = (ACx * ABx + ACy * ABy) / (ABx*ABx + ABy*ABy);
-    return { x: A.x + t * ABx, y: A.y + t * ABy };
-  }
-
-  function toCanvasCoords(pt, centerX, centerY, scale) {
-    return {
-      x: centerX + pt.x * scale,
-      y: centerY - pt.y * scale
-    };
-  }
-
-  function drawGrid(ctx, width, height, step=20) {
-    ctx.strokeStyle = "#eee";
-    ctx.lineWidth = 1;
-    for(let x = 0; x <= width; x += step) {
-      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
-    }
-    for(let y = 0; y <= height; y += step) {
-      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
-    }
-  }
-
-  function calculer() {
-    const angleUnite = document.getElementById("angleUnite").value;
-    const angleA = parseFloat(document.getElementById("angleA").value);
-    const distA = parseFloat(document.getElementById("distA").value);
-    const angleB = parseFloat(document.getElementById("angleB").value);
-    const distB = parseFloat(document.getElementById("distB").value);
-    const angleC = parseFloat(document.getElementById("angleC").value);
-    const distC = parseFloat(document.getElementById("distC").value);
-    const labelA = document.getElementById("labelA").value || "A";
-    const labelB = document.getElementById("labelB").value || "B";
-    const title = document.getElementById("graphTitle").value;
-
-    if ([angleA, distA, angleB, distB, angleC, distC].some(isNaN)) {
-      alert("Veuillez remplir tous les champs avec des nombres valides.");
-      return;
-    }
-
-    const A = polarToCartesian(angleA, distA, angleUnite);
-    const B = polarToCartesian(angleB, distB, angleUnite);
-    const C = polarToCartesian(angleC, distC, angleUnite);
-    const H = projectionOrthogonale(A, B, C);
-
-    const distCtoAB = distancePointADroite(A, B, C);
-    const distAB = distancePoints(A, B);
-    const distHA = distancePoints(H, A);
-    const distHB = distancePoints(H, B);
-
-    document.getElementById("distanceC").textContent = distCtoAB.toFixed(2);
-    document.getElementById("distanceAB").textContent = distAB.toFixed(2);
-    document.getElementById("distanceHA").textContent = distHA.toFixed(2);
-    document.getElementById("distanceHB").textContent = distHB.toFixed(2);
-
-    ctx.clearRect(0, 0, W, Hc);
-
-    const pts = [A, B, C, H, {x:0,y:0}];
-    const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
-    const minX = Math.min(...xs), maxX = Math.max(...xs);
-    const minY = Math.min(...ys), maxY = Math.max(...ys);
-    const margin = 50;
-    const scaleX = (W - 2*margin) / (maxX - minX || 1);
-    const scaleY = (Hc - 2*margin) / (maxY - minY || 1);
-    const scale = Math.min(scaleX, scaleY);
-    const centerX = margin + (W - 2*margin)/2 - ((minX + maxX)/2)*scale;
-    const centerY = margin + (Hc - 2*margin)/2 + ((minY + maxY)/2)*scale;
-
-    drawGrid(ctx, W, Hc);
-
-    function drawPoint(p, label, color = "black") {
-      const c = toCanvasCoords(p, centerX, centerY, scale);
-      ctx.beginPath(); ctx.arc(c.x, c.y, 5, 0, 2 * Math.PI);
-      ctx.fillStyle = color; ctx.fill();
-      ctx.font = "14px Arial"; ctx.fillStyle = "black";
-      ctx.fillText(label, c.x + 7, c.y - 7);
-    }
-
-    drawPoint(A, labelA, "blue");
-    drawPoint(B, labelB, "blue");
-    drawPoint(C, "C", "red");
-    drawPoint(H, "H", "green");
-    drawPoint({x:0,y:0}, "Origine", "gray");
-
-    const cA = toCanvasCoords(A, centerX, centerY, scale);
-    const cB = toCanvasCoords(B, centerX, centerY, scale);
-    const cC = toCanvasCoords(C, centerX, centerY, scale);
-    const cH = toCanvasCoords(H, centerX, centerY, scale);
-
-    ctx.save();
-    ctx.strokeStyle = "blue"; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(cA.x, cA.y); ctx.lineTo(cB.x, cB.y); ctx.stroke();
-    ctx.restore();
-
-    ctx.save();
-    ctx.strokeStyle = "red"; ctx.lineWidth = 2;
-    ctx.setLineDash([6, 4]);
-    ctx.beginPath(); ctx.moveTo(cC.x, cC.y); ctx.lineTo(cH.x, cH.y); ctx.stroke();
-    ctx.setLineDash([]); ctx.restore();
-
-    ctx.fillStyle = "black";
-    ctx.font = "16px Arial";
-    ctx.fillText(`Distance C à AB : ${distCtoAB.toFixed(2)} m`, 20, 20);
-    ctx.fillText(`HA = ${distHA.toFixed(2)} m`, 20, 40);
-    ctx.fillText(`HB = ${distHB.toFixed(2)} m`, 20, 60);
-    ctx.font = "18px Arial";
-    ctx.fillText(title, 20, Hc - 20);
-
-    exportBtn.style.display = "inline-block";
-  }
-
-  exportBtn.onclick = function() {
-    const link = document.createElement("a");
-    link.download = "distance_point_droite.png";
-    link.href = canvas.toDataURL("image/png");
-    link.click();
-  };
-</script>
-
+  <div class="overlay">
+    <h1>Choisissez une méthode de calcul</h1>
+    <a href="index.html"><button class="button">Méthode 1</button></a>
+    <a href="methode2.html"><button class="button">Méthode 2</button></a>
+  </div>
 </body>
 </html>
