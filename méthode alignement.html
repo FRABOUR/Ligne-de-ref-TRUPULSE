@@ -346,12 +346,9 @@
     ctx.fillText(title, 20, 30);
 
     ctx.font = "16px Arial";
-    ctx.fillText(`Distance C à AB : ${distCtoAB.toFixed(2)} ± ${mc.distCtoABStd.toFixed(3)} m`, 20, 60);
-    ctx.fillText(`AB : ${distABcalc.toFixed(2)} ± ${mc.distABStd.toFixed(3)} m`, 20, 90);
-    ctx.fillText(`AH : ${distHA.toFixed(2)} ± ${mc.distHAStd.toFixed(3)} m`, 20, 120);
-    ctx.fillText(`BH : ${distHB.toFixed(2)} ± ${mc.distHBStd.toFixed(3)} m`, 20, 150);
-    ctx.fillText(`HC : ${distHC.toFixed(2)} ± ${mc.distHCStd.toFixed(3)} m`, 20, 180);
-  }
+    ctx.fillText(`Distance C à Axe : ${distCtoAB.toFixed(2)} ± ${mc.distCtoABStd.toFixed(3)} m`, 20, 60);
+    ctx.fillText(`AH : ${distHA.toFixed(2)} ± ${mc.distHAStd.toFixed(3)} m`, 20, 90);
+      }
 
   exportBtn.onclick = function() {
     const link = document.createElement("a");
