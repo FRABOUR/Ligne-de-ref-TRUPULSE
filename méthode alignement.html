@@ -58,7 +58,7 @@
   <input type="text" id="labelA" value="A"/>
 </label>
 
-<label>Azimut de A :
+<label>Azimut du point A :
   <input type="number" id="angleA" step="0.01" value="327.12"/>
 </label>
 
@@ -66,31 +66,27 @@
   <input type="number" id="distA" step="0.01" value="151.11"/>
 </label>
 
-//<label>Distance entre A et B :
-//  <input type="number" id="distanceABInput" step="0.01" value="100.00"/>
-//</label>
-
-<label>Azimut de C :
+<label>Azimut de l'obstacle :
   <input type="number" id="angleC" step="0.01" value="7.15"/>
 </label>
 
-<label>Distance au point C :
+<label>Distance à l'obstacle :
   <input type="number" id="distC" step="0.01" value="52.54"/>
 </label>
 
 <label>Unité des angles :
   <select id="angleUnite">
-    <option value="deg">degrés (°)</option>
-    <option value="grad" selected>grades (gon)</option>
+    <option value="grad">grades (gon)</option>
+    <option value="deg" selected>degrés (°)</option>
   </select>
 </label>
 
-<label>Incertitude angulaire (σ angle, en degrés ou grades) :
-  <input type="number" id="incertitudeAngle" step="0.001" value="0.01"/>
+<label>Incertitude angulaire :
+  <input type="number" id="incertitudeAngle" step="0.001" value="1"/>
 </label>
 
-<label>Incertitude distance (σ distance, en mètres) :
-  <input type="number" id="incertitudeDist" step="0.001" value="0.01"/>
+<label>Incertitude distance :
+  <input type="number" id="incertitudeDist" step="0.001" value="0.1"/>
 </label>
 
 <button onclick="calculer()">Calculer</button>
