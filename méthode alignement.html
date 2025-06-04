@@ -2,361 +2,162 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Distance point-droite avec titre, logo et incertitudes V0.1</title>
+  <title>Projection orthogonale avec incertitudes</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 750px;
-      margin: 30px auto;
-      padding: 0 10px;
-      position: relative;
-    }
-    label {
-      display: block;
-      margin-top: 10px;
-    }
-    input, select {
-      margin-left: 5px;
-    }
-    button {
-      margin-top: 15px;
-      padding: 7px 15px;
-      font-size: 1em;
-    }
-    canvas {
-      border: 1px solid #ccc;
-      background: #f9f9f9;
-      display: block;
-      margin: 20px auto;
-    }
-    #resultats {
-      font-weight: bold;
-      color: darkblue;
-      margin-top: 15px;
-    }
-    #logoPage {
-      position: absolute;
-      top: 50px;
-      right: 10px;
-      width: 200px;
-      opacity: 1;
-    }
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    label { display: block; margin-top: 10px; }
+    input, select { margin-bottom: 5px; width: 100px; }
+    #canvas { border: 1px solid #ccc; margin-top: 20px; }
   </style>
 </head>
 <body>
+  <h2>Projection orthogonale avec incertitudes</h2>
 
-<img id="logoPage" src="logo.png" alt="Logo" />
+  <label>Angle A <input type="number" id="angleA" /></label>
+  <label>Distance A (m) <input type="number" id="distA" /></label>
 
-<h2>Calcul de la distance d'un point à une droite avec portée V0.4</h2>
-<p>Angles en degrés ou grades (gon), distances en mètres.</p>
+  <label>Angle C <input type="number" id="angleC" /></label>
+  <label>Distance C (m) <input type="number" id="distC" /></label>
 
-<label>Titre du graphique :
-  <input type="text" id="graphTitle" value="Liaison A-B"/>
-</label>
+  <label>Unité des angles :
+    <select id="angleUnite">
+      <option value="deg">Degrés</option>
+      <option value="gon">Gon</option>
+    </select>
+  </label>
 
-<label>Nom du point A :
-  <input type="text" id="labelA" value="A"/>
-</label>
+  <label>Incertitude angulaire <input type="number" id="sigmaAngle" step="0.01" value="0.1" /></label>
+  <label>Incertitude distance (m) <input type="number" id="sigmaDist" step="0.01" value="0.1" /></label>
 
-<label>Azimut du point A :
-  <input type="number" id="angleA" step="0.01" value="327.12"/>
-</label>
+  <label><input type="checkbox" id="useUncertainty" checked /> Prendre en compte les incertitudes</label>
 
-<label>Distance au point A :
-  <input type="number" id="distA" step="0.01" value="151.11"/>
-</label>
+  <button onclick="calculer()">Calculer</button>
 
-<label>Azimut de l'obstacle :
-  <input type="number" id="angleC" step="0.01" value="7.15"/>
-</label>
+  <div id="resultats" style="margin-top: 20px;"></div>
 
-<label>Distance à l'obstacle :
-  <input type="number" id="distC" step="0.01" value="52.54"/>
-</label>
+  <canvas id="canvas" width="600" height="600"></canvas>
 
-<label>Unité des angles :
-  <select id="angleUnite">
-    <option value="grad">grades (gon)</option>
-    <option value="deg" selected>degrés (°)</option>
-  </select>
-</label>
-
-<label>Incertitude angulaire :
-  <input type="number" id="incertitudeAngle" step="0.001" value="1"/>
-</label>
-
-<label>Incertitude distance :
-  <input type="number" id="incertitudeDist" step="0.001" value="0.1"/>
-</label>
-
-<button onclick="calculer()">Calculer</button>
-
-<div id="resultats">
-  <p>Distance point C à la droite AB : <span id="distanceC"></span> m</p>
-  <p>Portée (AB) : <span id="distanceAB"></span> m</p>
-  <p>Distance H–A : <span id="distanceHA"></span> m</p>
-  <p>Distance H–B : <span id="distanceHB"></span> m</p>
-</div>
-
-<canvas id="canvas" width="700" height="600"></canvas>
-<button id="exportBtn" style="display:none;">Exporter en PNG</button>
-
-<script>
-  const canvas = document.getElementById("canvas");
-  const ctx = canvas.getContext("2d");
-  const W = canvas.width;
-  const Hc = canvas.height;
-  const exportBtn = document.getElementById("exportBtn");
-
-  // Conversion angles en radians, ajustement pour dessiner à partir du nord vers l’est
-  function gonToRadAdjusted(gon) {
-    return Math.PI / 2 - (gon * Math.PI / 200);
-  }
-
-  function degToRadAdjusted(deg) {
-    return Math.PI / 2 - (deg * Math.PI / 180);
-  }
-
-  // Convertit angle + distance en coordonnées cartésiennes (x,y)
-  function polarToCartesian(angle, distance, unit) {
-    const rad = unit === "grad" ? gonToRadAdjusted(angle) : degToRadAdjusted(angle);
-    return { x: distance * Math.cos(rad), y: distance * Math.sin(rad) };
-  }
-
-  // Distance point à droite définie par A et B
-  function distancePointADroite(A, B, C) {
-    const num = Math.abs((B.y - A.y) * C.x - (B.x - A.x) * C.y + B.x * A.y - B.y * A.x);
-    const den = Math.sqrt((B.y - A.y)**2 + (B.x - A.x)**2);
-    return den !== 0 ? num / den : 0;
-  }
-
-  // Distance entre deux points
-  function distancePoints(P1, P2) {
-    return Math.sqrt((P2.x - P1.x)**2 + (P2.y - P1.y)**2);
-  }
-
-  // Projection orthogonale de C sur AB
-  function projectionOrthogonale(A, B, C) {
-    const ABx = B.x - A.x, ABy = B.y - A.y;
-    const ACx = C.x - A.x, ACy = C.y - A.y;
-    const t = (ACx * ABx + ACy * ABy) / (ABx*ABx + ABy*ABy);
-    return { x: A.x + t * ABx, y: A.y + t * ABy };
-  }
-
-  // Conversion coordonnées en coordonnées canvas
-  function toCanvasCoords(pt, centerX, centerY, scale) {
-    return {
-      x: centerX + pt.x * scale,
-      y: centerY - pt.y * scale
-    };
-  }
-
-  // Dessine une grille légère
-  function drawGrid(ctx, width, height, step=20) {
-    ctx.strokeStyle = "#eee";
-    ctx.lineWidth = 1;
-    for(let x = 0; x <= width; x += step) {
-      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
+  <script>
+    function toRadians(angle, unit) {
+      return unit === "gon" ? angle * Math.PI / 200 : angle * Math.PI / 180;
     }
-    for(let y = 0; y <= height; y += step) {
-      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
+
+    function calculer() {
+      const angleUnite = document.getElementById("angleUnite").value;
+      const angleA = parseFloat(document.getElementById("angleA").value);
+      const distA = parseFloat(document.getElementById("distA").value);
+      const angleC = parseFloat(document.getElementById("angleC").value);
+      const distC = parseFloat(document.getElementById("distC").value);
+      const sigmaAngle = parseFloat(document.getElementById("sigmaAngle").value);
+      const sigmaDist = parseFloat(document.getElementById("sigmaDist").value);
+      const useUncertainty = document.getElementById("useUncertainty").checked;
+      const porteeAB = 300;
+
+      const angleA_rad = toRadians(angleA, angleUnite);
+      const angleC_rad = toRadians(angleC, angleUnite);
+
+      const A = { x: distA * Math.cos(angleA_rad), y: distA * Math.sin(angleA_rad) };
+      const C = { x: distC * Math.cos(angleC_rad), y: distC * Math.sin(angleC_rad) };
+
+      const dirAB = { x: Math.cos(angleA_rad), y: Math.sin(angleA_rad) };
+      const B = { x: A.x + dirAB.x * porteeAB, y: A.y + dirAB.y * porteeAB };
+
+      const AB = { x: B.x - A.x, y: B.y - A.y };
+      const AC = { x: C.x - A.x, y: C.y - A.y };
+      const ab2 = AB.x ** 2 + AB.y ** 2;
+      const t = (AC.x * AB.x + AC.y * AB.y) / ab2;
+      const proj = { x: A.x + t * AB.x, y: A.y + t * AB.y };
+
+      const dx = proj.x - C.x;
+      const dy = proj.y - C.y;
+      const distance = Math.sqrt(dx ** 2 + dy ** 2);
+
+      let texte = `<p>Distance orthogonale : ${distance.toFixed(3)} m</p>`;
+
+      if (useUncertainty) {
+        const N = 10000;
+        const mc = monteCarloSimulations(N, angleUnite, angleA, distA, angleC, distC, sigmaAngle, sigmaDist, porteeAB);
+        texte += `<p>Estimation par Monte Carlo : ${mc.moyenne.toFixed(3)} ± ${mc.ecartType.toFixed(3)} m</p>`;
+      }
+
+      document.getElementById("resultats").innerHTML = texte;
+      dessiner(A, B, C, proj);
     }
-  }
 
-  // Fonction de calcul Monte Carlo pour incertitudes
-  function monteCarloSimulations(N, angleUnite, angleA, distA, distanceAB, angleC, distC, sigmaAngle, sigmaDist) {
-    let results = {
-      distCtoAB: [], distAB: [], distHA: [], distHB: [], distHC: []
-    };
-
-    // Convertir incertitudes d'angle en radians selon unité
-    const sigmaAngleRad = (angleUnite === "grad") ? sigmaAngle * Math.PI / 200 : sigmaAngle * Math.PI / 180;
-
-    for(let i = 0; i < N; i++) {
-      // Générer perturbations gaussiennes (Box-Muller)
+    function monteCarloSimulations(N, angleUnite, angleA, distA, angleC, distC, sigmaAngle, sigmaDist, porteeAB) {
       function randNorm() {
         let u = 0, v = 0;
-        while(u === 0) u = Math.random();
-        while(v === 0) v = Math.random();
+        while (u === 0) u = Math.random();
+        while (v === 0) v = Math.random();
         return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
       }
 
-      // Angles perturbés en radians
-      const angleAPert = (angleUnite === "grad" ? angleA * Math.PI/200 : angleA * Math.PI/180) + sigmaAngleRad * randNorm();
-      const angleCPert = (angleUnite === "grad" ? angleC * Math.PI/200 : angleC * Math.PI/180) + sigmaAngleRad * randNorm();
+      const distances = [];
 
-      // Distances perturbées
-      const distAPert = distA + sigmaDist * randNorm();
-      const distCPert = distC + sigmaDist * randNorm();
-      const distanceABPert = distanceAB + sigmaDist * randNorm();
+      for (let i = 0; i < N; i++) {
+        const aA = angleA + sigmaAngle * randNorm();
+        const dA = distA + sigmaDist * randNorm();
+        const aC = angleC + sigmaAngle * randNorm();
+        const dC = distC + sigmaDist * randNorm();
+        const pAB = porteeAB; // constante
 
-      // Coordonnées perturbées
-      const A = { x: distAPert * Math.cos(Math.PI/2 - angleAPert), y: distAPert * Math.sin(Math.PI/2 - angleAPert) };
-      const dirAB = { x: Math.cos(Math.PI/2 - angleAPert), y: Math.sin(Math.PI/2 - angleAPert) };
-      const B = { x: A.x + dirAB.x * distanceABPert, y: A.y + dirAB.y * distanceABPert };
-      const C = { x: distCPert * Math.cos(Math.PI/2 - angleCPert), y: distCPert * Math.sin(Math.PI/2 - angleCPert) };
+        const aA_rad = toRadians(aA, angleUnite);
+        const aC_rad = toRadians(aC, angleUnite);
 
-      const H = projectionOrthogonale(A, B, C);
+        const A = { x: dA * Math.cos(aA_rad), y: dA * Math.sin(aA_rad) };
+        const C = { x: dC * Math.cos(aC_rad), y: dC * Math.sin(aC_rad) };
 
-      results.distCtoAB.push(distancePointADroite(A, B, C));
-      results.distAB.push(distancePoints(A, B));
-      results.distHA.push(distancePoints(H, A));
-      results.distHB.push(distancePoints(H, B));
-      results.distHC.push(distancePoints(H, C));
-    }
+        const dirAB = { x: Math.cos(aA_rad), y: Math.sin(aA_rad) };
+        const B = { x: A.x + dirAB.x * pAB, y: A.y + dirAB.y * pAB };
 
-    function mean(arr) {
-      return arr.reduce((a,b) => a+b, 0) / arr.length;
-    }
-    function stddev(arr) {
-      const m = mean(arr);
-      return Math.sqrt(arr.reduce((a,b) => a + (b-m)**2, 0) / (arr.length - 1));
-    }
+        const AB = { x: B.x - A.x, y: B.y - A.y };
+        const AC = { x: C.x - A.x, y: C.y - A.y };
+        const ab2 = AB.x ** 2 + AB.y ** 2;
+        const t = (AC.x * AB.x + AC.y * AB.y) / ab2;
+        const proj = { x: A.x + t * AB.x, y: A.y + t * AB.y };
 
-    return {
-      distCtoABMean: mean(results.distCtoAB),
-      distCtoABStd: stddev(results.distCtoAB),
-
-      distABMean: mean(results.distAB),
-      distABStd: stddev(results.distAB),
-
-      distHAMean: mean(results.distHA),
-      distHAStd: stddev(results.distHA),
-
-      distHBMean: mean(results.distHB),
-      distHBStd: stddev(results.distHB),
-
-      distHCMean: mean(results.distHC),
-      distHCStd: stddev(results.distHC),
-    };
-  }
-
-  function calculer() {
-    const angleUnite = document.getElementById("angleUnite").value;
-    const angleA = parseFloat(document.getElementById("angleA").value);
-    const distA = parseFloat(document.getElementById("distA").value);
-    // const distanceAB = parseFloat(document.getElementById("distanceABInput").value);
-    const angleC = parseFloat(document.getElementById("angleC").value);
-    const distC = parseFloat(document.getElementById("distC").value);
-    const labelA = document.getElementById("labelA").value || "A";
-    const labelB = "B";
-    const title = document.getElementById("graphTitle").value;
-    const sigmaAngle = parseFloat(document.getElementById("incertitudeAngle").value);
-    const sigmaDist = parseFloat(document.getElementById("incertitudeDist").value);
-
-    if ([angleA, distA, angleC, distC, distanceAB, sigmaAngle, sigmaDist].some(isNaN)) {
-      alert("Veuillez remplir tous les champs avec des nombres valides.");
-      return;
-    }
-
-    // Calcul valeurs exactes
-    const A = polarToCartesian(angleA, distA, angleUnite);
-    const dirAB = polarToCartesian(angleA, 1, angleUnite);
-    const B = { x: A.x + dirAB.x * distanceAB, y: A.y + dirAB.y * distanceAB };
-    const C = polarToCartesian(angleC, distC, angleUnite);
-    const H = projectionOrthogonale(A, B, C);
-
-    const distCtoAB = distancePointADroite(A, B, C);
-    const distABcalc = distancePoints(A, B);
-    const distHA = distancePoints(H, A);
-    const distHB = distancePoints(H, B);
-    const distHC = distancePoints(H, C);
-
-    // Monte Carlo (N=10000 itérations)
-    const N = 10000;
-    const mc = monteCarloSimulations(N, angleUnite, angleA, distA, distanceAB, angleC, distC, sigmaAngle, sigmaDist);
-
-    // Mise à jour des résultats texte sous les champs
-    document.getElementById("distanceC").textContent = `${distCtoAB.toFixed(2)} ± ${mc.distCtoABStd.toFixed(3)}`;
-    document.getElementById("distanceAB").textContent = `${distABcalc.toFixed(2)} ± ${mc.distABStd.toFixed(3)}`;
-    document.getElementById("distanceHA").textContent = `${distHA.toFixed(2)} ± ${mc.distHAStd.toFixed(3)}`;
-    document.getElementById("distanceHB").textContent = `${distHB.toFixed(2)} ± ${mc.distHBStd.toFixed(3)}`;
-
-    // Nettoyage canvas
-    ctx.clearRect(0, 0, W, Hc);
-
-    // Centre du dessin dans le canvas
-    const margin = 80;
-    // Calcul limites en coordonnées x et y
-    const xs = [A.x, B.x, C.x, H.x, 0];
-    const ys = [A.y, B.y, C.y, H.y, 0];
-    const minX = Math.min(...xs);
-    const maxX = Math.max(...xs);
-    const minY = Math.min(...ys);
-    const maxY = Math.max(...ys);
-
-    // Taille max du dessin
-    const widthDrawing = maxX - minX;
-    const heightDrawing = maxY - minY;
-
-    // Échelle pour adapter au canvas avec marge
-    const scaleX = (W - 2*margin) / widthDrawing;
-    const scaleY = (Hc - 2*margin) / heightDrawing;
-    const scale = Math.min(scaleX, scaleY);
-
-    // Centre canvas en coordonnées dessin (centre du dessin)
-    const centerX = W/2 - (minX + maxX)/2 * scale;
-    const centerY = Hc/2 + (minY + maxY)/2 * scale;
-
-    // Dessin de la grille
-    drawGrid(ctx, W, Hc, 25);
-
-    // Fonctions pour dessiner points, droites, texte
-    function drawPoint(pt, color, label) {
-      const cpt = toCanvasCoords(pt, centerX, centerY, scale);
-      ctx.beginPath();
-      ctx.fillStyle = color;
-      ctx.arc(cpt.x, cpt.y, 6, 0, 2 * Math.PI);
-      ctx.fill();
-      ctx.fillStyle = "black";
-      ctx.font = "16px Arial";
-      ctx.fillText(label, cpt.x + 8, cpt.y + 6);
-    }
-
-    // Droite AB
-    const Acanv = toCanvasCoords(A, centerX, centerY, scale);
-    const Bcanv = toCanvasCoords(B, centerX, centerY, scale);
-    ctx.strokeStyle = "blue";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(Acanv.x, Acanv.y);
-    ctx.lineTo(Bcanv.x, Bcanv.y);
-    ctx.stroke();
-
-    // Hauteur CH
-    const Ccanv = toCanvasCoords(C, centerX, centerY, scale);
-    const Hcanv = toCanvasCoords(H, centerX, centerY, scale);
-    ctx.strokeStyle = "red";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(Ccanv.x, Ccanv.y);
-    ctx.lineTo(Hcanv.x, Hcanv.y);
-    ctx.stroke();
-
-    // Points A, B, C, H, Origine
-    drawPoint(A, "blue", labelA);
-    drawPoint(B, "blue", labelB);
-    drawPoint(C, "green", "C");
-    drawPoint(H, "red", "H");
-    drawPoint({x:0,y:0}, "gray", "Origine");
-
-    // Affichage titre + résultats avec incertitudes
-    ctx.fillStyle = "black";
-    ctx.font = "20px Arial";
-    ctx.fillText(title, 20, 30);
-
-    ctx.font = "16px Arial";
-    ctx.fillText(`Distance C à Axe : ${distCtoAB.toFixed(2)} ± ${mc.distCtoABStd.toFixed(3)} m`, 20, 60);
-    ctx.fillText(`AH : ${distHA.toFixed(2)} ± ${mc.distHAStd.toFixed(3)} m`, 20, 90);
+        const dx = proj.x - C.x;
+        const dy = proj.y - C.y;
+        distances.push(Math.sqrt(dx ** 2 + dy ** 2));
       }
 
-  exportBtn.onclick = function() {
-    const link = document.createElement("a");
-    link.download = "distance_point_droite.png";
-    link.href = canvas.toDataURL("image/png");
-    link.click();
-  }
-</script>
+      const moyenne = distances.reduce((sum, d) => sum + d, 0) / N;
+      const variance = distances.reduce((sum, d) => sum + (d - moyenne) ** 2, 0) / N;
+      return { moyenne, ecartType: Math.sqrt(variance) };
+    }
 
+    function dessiner(A, B, C, P) {
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const offsetX = canvas.width / 2;
+      const offsetY = canvas.height / 2;
+      const scale = 1;
+
+      function drawPoint(pt, color, label) {
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(offsetX + pt.x * scale, offsetY - pt.y * scale, 4, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.fillText(label, offsetX + pt.x * scale + 5, offsetY - pt.y * scale - 5);
+      }
+
+      function drawLine(p1, p2, color) {
+        ctx.strokeStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(offsetX + p1.x * scale, offsetY - p1.y * scale);
+        ctx.lineTo(offsetX + p2.x * scale, offsetY - p2.y * scale);
+        ctx.stroke();
+      }
+
+      drawLine(A, B, "#000");
+      drawLine(C, P, "red");
+      drawPoint(A, "black", "A");
+      drawPoint(B, "black", "B");
+      drawPoint(C, "blue", "C");
+      drawPoint(P, "red", "P");
+    }
+  </script>
 </body>
 </html>
