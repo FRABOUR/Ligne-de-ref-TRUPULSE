@@ -2,16 +2,19 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Projection orthogonale avec incertitudes</title>
+  <title>Projection orthogonale</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
+    body { font-family: Arial; padding: 20px; }
     label { display: block; margin-top: 10px; }
-    input, select { margin-bottom: 5px; width: 100px; }
+    input, select { width: 100px; }
     #canvas { border: 1px solid #ccc; margin-top: 20px; }
   </style>
 </head>
 <body>
   <h2>Projection orthogonale avec incertitudes</h2>
+
+  <label>Nom de la ligne <input type="text" id="nomLigne" value="Ligne 1" /></label>
+  <label>Nom du support <input type="text" id="nomSupport" value="Support A" /></label>
 
   <label>Angle A <input type="number" id="angleA" /></label>
   <label>Distance A (m) <input type="number" id="distA" /></label>
@@ -34,7 +37,6 @@
   <button onclick="calculer()">Calculer</button>
 
   <div id="resultats" style="margin-top: 20px;"></div>
-
   <canvas id="canvas" width="600" height="600"></canvas>
 
   <script>
@@ -43,6 +45,7 @@
     }
 
     function calculer() {
+      <button onclick="exporter()">Exporter le dessin</button>
       const angleUnite = document.getElementById("angleUnite").value;
       const angleA = parseFloat(document.getElementById("angleA").value);
       const distA = parseFloat(document.getElementById("distA").value);
@@ -51,6 +54,8 @@
       const sigmaAngle = parseFloat(document.getElementById("sigmaAngle").value);
       const sigmaDist = parseFloat(document.getElementById("sigmaDist").value);
       const useUncertainty = document.getElementById("useUncertainty").checked;
+      const nomLigne = document.getElementById("nomLigne").value;
+      const nomSupport = document.getElementById("nomSupport").value;
       const porteeAB = 300;
 
       const angleA_rad = toRadians(angleA, angleUnite);
@@ -58,7 +63,6 @@
 
       const A = { x: distA * Math.cos(angleA_rad), y: distA * Math.sin(angleA_rad) };
       const C = { x: distC * Math.cos(angleC_rad), y: distC * Math.sin(angleC_rad) };
-
       const dirAB = { x: Math.cos(angleA_rad), y: Math.sin(angleA_rad) };
       const B = { x: A.x + dirAB.x * porteeAB, y: A.y + dirAB.y * porteeAB };
 
@@ -68,28 +72,25 @@
       const t = (AC.x * AB.x + AC.y * AB.y) / ab2;
       const proj = { x: A.x + t * AB.x, y: A.y + t * AB.y };
 
-      const dx = proj.x - C.x;
-      const dy = proj.y - C.y;
-      const distance = Math.sqrt(dx ** 2 + dy ** 2);
+      const CP = Math.hypot(proj.x - C.x, proj.y - C.y);
+      const AP = Math.hypot(proj.x - A.x, proj.y - A.y);
 
-      let texte = `<p>Distance orthogonale : ${distance.toFixed(3)} m</p>`;
+      let texte = `<p>Distance orthogonale (CP) : ${CP.toFixed(3)} m<br/>Distance AP : ${AP.toFixed(3)} m</p>`;
 
       if (useUncertainty) {
         const N = 10000;
         const mc = monteCarloSimulations(N, angleUnite, angleA, distA, angleC, distC, sigmaAngle, sigmaDist, porteeAB);
-        texte += `<p>Estimation par Monte Carlo : ${mc.moyenne.toFixed(3)} ± ${mc.ecartType.toFixed(3)} m</p>`;
+        texte += `<p>Estimation Monte Carlo : ${mc.moyenne.toFixed(3)} ± ${mc.ecartType.toFixed(3)} m</p>`;
       }
 
       document.getElementById("resultats").innerHTML = texte;
-      dessiner(A, B, C, proj);
+      dessiner(A, B, C, proj, nomLigne, nomSupport, AP, CP);
     }
 
     function monteCarloSimulations(N, angleUnite, angleA, distA, angleC, distC, sigmaAngle, sigmaDist, porteeAB) {
       function randNorm() {
-        let u = 0, v = 0;
-        while (u === 0) u = Math.random();
-        while (v === 0) v = Math.random();
-        return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+        let u = Math.random(), v = Math.random();
+        return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
       }
 
       const distances = [];
@@ -99,16 +100,14 @@
         const dA = distA + sigmaDist * randNorm();
         const aC = angleC + sigmaAngle * randNorm();
         const dC = distC + sigmaDist * randNorm();
-        const pAB = porteeAB; // constante
 
         const aA_rad = toRadians(aA, angleUnite);
         const aC_rad = toRadians(aC, angleUnite);
 
         const A = { x: dA * Math.cos(aA_rad), y: dA * Math.sin(aA_rad) };
         const C = { x: dC * Math.cos(aC_rad), y: dC * Math.sin(aC_rad) };
-
         const dirAB = { x: Math.cos(aA_rad), y: Math.sin(aA_rad) };
-        const B = { x: A.x + dirAB.x * pAB, y: A.y + dirAB.y * pAB };
+        const B = { x: A.x + dirAB.x * porteeAB, y: A.y + dirAB.y * porteeAB };
 
         const AB = { x: B.x - A.x, y: B.y - A.y };
         const AC = { x: C.x - A.x, y: C.y - A.y };
@@ -116,48 +115,78 @@
         const t = (AC.x * AB.x + AC.y * AB.y) / ab2;
         const proj = { x: A.x + t * AB.x, y: A.y + t * AB.y };
 
-        const dx = proj.x - C.x;
-        const dy = proj.y - C.y;
-        distances.push(Math.sqrt(dx ** 2 + dy ** 2));
+        distances.push(Math.hypot(proj.x - C.x, proj.y - C.y));
       }
 
-      const moyenne = distances.reduce((sum, d) => sum + d, 0) / N;
-      const variance = distances.reduce((sum, d) => sum + (d - moyenne) ** 2, 0) / N;
+      const moyenne = distances.reduce((a, b) => a + b, 0) / N;
+      const variance = distances.reduce((a, b) => a + (b - moyenne) ** 2, 0) / N;
       return { moyenne, ecartType: Math.sqrt(variance) };
     }
 
-    function dessiner(A, B, C, P) {
+    function dessiner(A, B, C, P, nomLigne, nomSupport, AP, CP) {
       const canvas = document.getElementById("canvas");
       const ctx = canvas.getContext("2d");
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      const offsetX = canvas.width / 2;
-      const offsetY = canvas.height / 2;
-      const scale = 1;
+      const points = [A, B, C, P];
+      const xs = points.map(p => p.x);
+      const ys = points.map(p => p.y);
+      const minX = Math.min(...xs), maxX = Math.max(...xs);
+      const minY = Math.min(...ys), maxY = Math.max(...ys);
 
-      function drawPoint(pt, color, label) {
+      const padding = 50;
+      const scaleX = (canvas.width - 2 * padding) / (maxX - minX || 1);
+      const scaleY = (canvas.height - 2 * padding) / (maxY - minY || 1);
+      const scale = Math.min(scaleX, scaleY);
+
+      const offsetX = padding - minX * scale;
+      const offsetY = canvas.height - padding + minY * scale;
+
+      function projX(x) { return x * scale + offsetX; }
+      function projY(y) { return -y * scale + offsetY; }
+
+      function drawPoint(p, color, label) {
         ctx.fillStyle = color;
         ctx.beginPath();
-        ctx.arc(offsetX + pt.x * scale, offsetY - pt.y * scale, 4, 0, 2 * Math.PI);
+        ctx.arc(projX(p.x), projY(p.y), 4, 0, 2 * Math.PI);
         ctx.fill();
-        ctx.fillText(label, offsetX + pt.x * scale + 5, offsetY - pt.y * scale - 5);
+        ctx.fillText(label, projX(p.x) + 5, projY(p.y) - 5);
       }
 
       function drawLine(p1, p2, color) {
         ctx.strokeStyle = color;
         ctx.beginPath();
-        ctx.moveTo(offsetX + p1.x * scale, offsetY - p1.y * scale);
-        ctx.lineTo(offsetX + p2.x * scale, offsetY - p2.y * scale);
+        ctx.moveTo(projX(p1.x), projY(p1.y));
+        ctx.lineTo(projX(p2.x), projY(p2.y));
         ctx.stroke();
       }
 
-      drawLine(A, B, "#000");
+      // Tracer les lignes
+      drawLine(A, B, "black");
       drawLine(C, P, "red");
+
+      // Tracer les points
       drawPoint(A, "black", "A");
       drawPoint(B, "black", "B");
       drawPoint(C, "blue", "C");
       drawPoint(P, "red", "P");
+
+      // Légendes
+      ctx.fillStyle = "black";
+      ctx.font = "14px Arial";
+      ctx.fillText(`Ligne : ${nomLigne}`, 20, 20);
+      ctx.fillText(`Support : ${nomSupport}`, 20, 40);
+      ctx.fillText(`AP = ${AP.toFixed(2)} m`, 20, 60);
+      ctx.fillText(`CP = ${CP.toFixed(2)} m`, 20, 80);
     }
   </script>
+function exporter() {
+  const canvas = document.getElementById("canvas");
+  const image = canvas.toDataURL("image/png");
+  const link = document.createElement("a");
+  link.download = "projection.png";
+  link.href = image;
+  link.click();
+}
 </body>
 </html>
