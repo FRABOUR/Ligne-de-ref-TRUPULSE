@@ -35,6 +35,7 @@
   <label><input type="checkbox" id="useUncertainty" checked /> Prendre en compte les incertitudes</label>
 
   <button onclick="calculer()">Calculer</button>
+  <button onclick="exporter()">Exporter le dessin</button>
 
   <div id="resultats" style="margin-top: 20px;"></div>
   <canvas id="canvas" width="600" height="600"></canvas>
@@ -45,7 +46,6 @@
     }
 
     function calculer() {
-      <button onclick="exporter()">Exporter le dessin</button>
       const angleUnite = document.getElementById("angleUnite").value;
       const angleA = parseFloat(document.getElementById("angleA").value);
       const distA = parseFloat(document.getElementById("distA").value);
@@ -161,17 +161,14 @@
         ctx.stroke();
       }
 
-      // Tracer les lignes
       drawLine(A, B, "black");
       drawLine(C, P, "red");
 
-      // Tracer les points
       drawPoint(A, "black", "A");
       drawPoint(B, "black", "B");
       drawPoint(C, "blue", "C");
       drawPoint(P, "red", "P");
 
-      // Légendes
       ctx.fillStyle = "black";
       ctx.font = "14px Arial";
       ctx.fillText(`Ligne : ${nomLigne}`, 20, 20);
@@ -179,14 +176,16 @@
       ctx.fillText(`AP = ${AP.toFixed(2)} m`, 20, 60);
       ctx.fillText(`CP = ${CP.toFixed(2)} m`, 20, 80);
     }
+
+    function exporter() {
+      const canvas = document.getElementById("canvas");
+      const image = canvas.toDataURL("image/png");
+      const link = document.createElement("a");
+      link.download = "projection.png";
+      link.href = image;
+      link.click();
+    }
   </script>
-function exporter() {
-  const canvas = document.getElementById("canvas");
-  const image = canvas.toDataURL("image/png");
-  const link = document.createElement("a");
-  link.download = "projection.png";
-  link.href = image;
-  link.click();
-}
+
 </body>
 </html>
